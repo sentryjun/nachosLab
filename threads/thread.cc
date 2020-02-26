@@ -19,6 +19,7 @@
 #include "switch.h"
 #include "synch.h"
 #include "system.h"
+#include "unistd.h"
 
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
@@ -38,6 +39,12 @@ Thread::Thread(char* threadName)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+
+    //Add by jun
+    //USERID IS CURRENT USERID IN LINUX
+    uid = getuid();
+    //TEST for user id
+    //printf("Current user id is %d\n", uid);
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
