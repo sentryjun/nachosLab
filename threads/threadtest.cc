@@ -50,6 +50,7 @@ ThreadTest1()
 {
     DEBUG('t', "Entering ThreadTest1");
 
+
     Thread *t = new Thread("forked thread");
 
     t->Fork(SimpleThread, (void*)1);
