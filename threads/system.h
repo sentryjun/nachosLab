@@ -18,6 +18,9 @@
 //Add by Jun
 //Max Threads Numbers
 #define MAXTHREADS 128
+//add by jun
+extern int tidNumber[MAXTHREADS];
+extern Thread *threadInstances[MAXTHREADS];
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
@@ -31,8 +34,6 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
-//add by jun
-extern int tidNumber[MAXTHREADS];
 
 #ifdef USER_PROGRAM
 #include "machine.h"

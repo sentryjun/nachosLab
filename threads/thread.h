@@ -109,6 +109,7 @@ class Thread {
     // add by jun
     int getThreadID() { return tid; }
     int getUserID() { return uid; }
+    const char *getStatus();
 
   private:
     // some of the private data for this class is listed above
@@ -122,6 +123,13 @@ class Thread {
     void StackAllocate(VoidFunctionPtr func, void *arg);
     					// Allocate a stack for thread.
 					// Used internally by Fork()
+
+    //Add by jun
+    //Allocate Thread ID
+    int ThreadIDAllocate();
+
+    //DeAllocate Thread ID
+    void ThreadIDDeallocate();
 
 #ifdef USER_PROGRAM
 // A thread running a user program actually has *two* sets of CPU registers -- 

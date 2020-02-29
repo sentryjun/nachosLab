@@ -45,6 +45,14 @@ Thread::Thread(char* threadName)
     uid = getuid();
     //TEST for user id
     //printf("Current user id is %d\n", uid);
+    //Allocate tid
+    tid = ThreadIDAllocate();
+    if (tid == -1) {
+      fprintf(
+          stderr,
+          "ThreadAllocatedError: Threads has reached the maximum limits!\n");
+    }
+    ASSERT(tid != -1);
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -64,9 +72,10 @@ Thread::Thread(char* threadName)
 
 Thread::~Thread()
 {
-    DEBUG('t', "Deleting thread \"%s\"\n", name);
+    DEBUG('t', "Deleting thread \"%s\", tid  %d \n", name, tid);
 
     ASSERT(this != currentThread);
+    
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
 }
@@ -242,8 +251,15 @@ Thread::Sleep ()
 
 static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
-void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
+//Add by jun TS print
+//void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
 
+void ThreadPrint(int arg) 
+{
+    Thread *t = (Thread *)arg;
+    printf("%10d %10d %10s %15s\n", t->getUserID(), t->getThreadID(),
+           t->getName(), t->getStatus());
+}
 //----------------------------------------------------------------------
 // Thread::StackAllocate
 //	Allocate and initialize an execution stack.  The stack is
@@ -290,6 +306,59 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
     machineState[WhenDonePCState] = (int*)ThreadFinish;
 }
 
+// Add by jun
+//-----------------------------------------------------------------------
+// Thread::ThreadIDAllocate
+//   Allocate thread ID for every thread
+//   If Thread ID was Allocated successfully, it will return 
+//   the ID and if not -1 returned
+//-----------------------------------------------------------------------
+int
+Thread::ThreadIDAllocate() 
+{ 
+    for (int i = 0; i < MAXTHREADS; i++) 
+    {
+        if (tidNumber[i] == 0) {
+            tidNumber[i] = 1;
+            threadInstances[i] = this;
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Add by jun
+//-----------------------------------------------------------------------
+// Thread::ThreadIDDeallocate
+//   DeAllocate thread ID
+//-----------------------------------------------------------------------
+void
+Thread::ThreadIDDeallocate() 
+{ 
+    tidNumber[tid] = 0;
+    threadInstances[tid] = nullptr;
+}
+
+//Add by jun
+//-----------------------------------------------------------------------
+//  Thread::getStatus
+//    return Status String of the thread
+//-----------------------------------------------------------------------
+const char*
+Thread::getStatus()
+{
+    switch(this->status)
+    {
+        case JUST_CREATED:
+          return "JUST_CREATED";
+        case READY:
+          return "READY";
+        case RUNNING:
+          return "RUNNING";
+        case BLOCKED:
+          return "BLOCKED";
+    }
+}
 #ifdef USER_PROGRAM
 #include "machine.h"
 

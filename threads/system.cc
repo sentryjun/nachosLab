@@ -18,7 +18,10 @@ Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
 					// for invoking context switches
-
+//add byjun
+int tidNumber[MAXTHREADS];
+Thread *threadInstances[MAXTHREADS];
+//
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
 #endif
@@ -128,8 +131,13 @@ Initialize(int argc, char **argv)
 	}
 #endif
     }
-
-    DebugInit(debugArgs);			// initialize DEBUG messages
+    // Add by jun
+    // initialize tid and threads arrays
+    for (int i = 0; i < MAXTHREADS; i++) {
+      tidNumber[i] = 0;
+      threadInstances[i] = nullptr;
+    }
+    DebugInit(debugArgs);                       // initialize DEBUG messages
     stats = new Statistics();			// collect statistics
     interrupt = new Interrupt;			// start up interrupt handling
     scheduler = new Scheduler();		// initialize the ready queue
