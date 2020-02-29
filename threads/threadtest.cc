@@ -79,14 +79,11 @@ ThreadTest2()
 
 void TSprint(int what) 
 {
-  IntStatus oldLevel = interrupt->SetLevel(IntOff);
-
   printf("%10s %10s %10s %15s\n", "uid", "tid", "name", "status");
   ThreadPrint((int)currentThread);
   List *lst = scheduler->getReadyList();
   lst->Mapcar(ThreadPrint);
   currentThread->Yield();
-  interrupt->SetLevel(oldLevel);
 }
 
 //-----------------------------------------------------------------------
