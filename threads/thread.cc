@@ -33,7 +33,7 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-Thread::Thread(char* threadName)
+Thread::Thread(char* threadName, int p = 0)
 {
     name = threadName;
     stackTop = NULL;
@@ -47,6 +47,7 @@ Thread::Thread(char* threadName)
     //printf("Current user id is %d\n", uid);
     //Allocate tid
     tid = ThreadIDAllocate();
+    priority = p;
     if (tid == -1) {
       fprintf(
           stderr,
@@ -196,11 +197,14 @@ Thread::Yield ()
     ASSERT(this == currentThread);
     
     DEBUG('t', "Yielding thread \"%s\"\n", getName());
-    
+
+   // scheduler->ReadyToRun(this);
+
     nextThread = scheduler->FindNextToRun();
+    DEBUG('t', "next thread is %d", (int)nextThread);
     if (nextThread != NULL) {
-	scheduler->ReadyToRun(this);
-	scheduler->Run(nextThread);
+      scheduler->ReadyToRun(this);
+      scheduler->Run(nextThread);
     }
     (void) interrupt->SetLevel(oldLevel);
 }
@@ -257,8 +261,8 @@ static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg) 
 {
     Thread *t = (Thread *)arg;
-    printf("%10d %10d %10s %15s\n", t->getUserID(), t->getThreadID(),
-           t->getName(), t->getStatus());
+    printf("%10d %10d %10s %10d %15s\n", t->getUserID(), t->getThreadID(),
+           t->getName(), t->getPriority(), t->getStatus());
 }
 //----------------------------------------------------------------------
 // Thread::StackAllocate

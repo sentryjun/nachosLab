@@ -84,9 +84,13 @@ class Thread {
     // User ID and thread ID
     int tid;
     int uid;
+    
+    //add by jun
+    // Priority
+    int priority;
 
   public:
-    Thread(char* debugName);		// initialize a Thread 
+    Thread(char* debugName, int p = 0);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 
@@ -109,6 +113,7 @@ class Thread {
     // add by jun
     int getThreadID() { return tid; }
     int getUserID() { return uid; }
+    int getPriority() { return priority;}
     const char *getStatus();
 
   private:

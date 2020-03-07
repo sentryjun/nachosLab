@@ -79,7 +79,7 @@ ThreadTest2()
 
 void TSprint(int what) 
 {
-  printf("%10s %10s %10s %15s\n", "uid", "tid", "name", "status");
+  printf("%10s %10s %10s %10s %15s\n", "uid", "tid", "name", "priority", "status");
   ThreadPrint((int)currentThread);
   List *lst = scheduler->getReadyList();
   lst->Mapcar(ThreadPrint);
@@ -105,6 +105,29 @@ void ThreadTest3() {
     
 }
 
+void PriorityTest() { 
+  for (int i = 0; i < 5; i++) {
+    printf("thread name=%s, id=%d, userid=%d, priority=%d looped %d times\n",
+           currentThread->getName(), currentThread->getThreadID(),
+           currentThread->getUserID(), currentThread->getPriority(), i);
+    currentThread->Yield();
+  }
+}
+//------------------------------------------------------------------------
+//  Prority Test
+//-----------------------------------------------------------------------
+void ThreadTest4() { 
+  DEBUG('t', "Entering ThreadTest4");
+  Thread *t1 = new Thread("fork 1", 1);
+  t1->Fork((VoidFunctionPtr)PriorityTest, (void*)1);
+  Thread *t2 = new Thread("fork 2", 2);
+  t2->Fork((VoidFunctionPtr)PriorityTest, (void*)2);
+  Thread *t3 = new Thread("fork 3", 3);
+  t3->Fork((VoidFunctionPtr)PriorityTest, (void*)3);
+
+  currentThread->Yield();
+  PriorityTest();
+}
 
 //----------------------------------------------------------------------
 // ThreadTest
@@ -123,6 +146,10 @@ ThreadTest()
       break;
     case 3:
       ThreadTest3();
+      break;
+    case 4:
+      ThreadTest4();
+      break;
     default:
       printf("No test specified.\n");
       break;

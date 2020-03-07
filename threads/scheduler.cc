@@ -56,7 +56,10 @@ Scheduler::ReadyToRun (Thread *thread)
     DEBUG('t', "Putting thread %s on ready list.\n", thread->getName());
 
     thread->setStatus(READY);
-    readyList->Append((void *)thread);
+    //readyList->Append((void *)thread);
+    //add by jun
+    //sorted insert
+    readyList->SortedInsert((void *)thread, thread->getPriority());
 }
 
 //----------------------------------------------------------------------
@@ -70,7 +73,29 @@ Scheduler::ReadyToRun (Thread *thread)
 Thread *
 Scheduler::FindNextToRun ()
 {
-    return (Thread *)readyList->Remove();
+    //add by jun
+    Thread *nextThread;
+    nextThread = (Thread *)readyList->Remove();
+    DEBUG('t', "next thread is%d\n", (int)nextThread);
+    if (nextThread == NULL) {
+      return NULL;
+    }
+    if (currentThread != threadToBeDestroyed &&
+        nextThread->getPriority() >= currentThread->getPriority()) {
+      readyList->SortedInsert((void *)nextThread, nextThread->getPriority());
+      return NULL;
+    } else {
+      return nextThread;
+    }
+    /*if (nextThread->getPriority() < currentThread->getPriority()) {
+      readyList->SortedInsert((void*)currentThread, currentThread->getPriority());
+      return nextThread;
+    } else {
+      readyList->SortedInsert((void *)nextThread, nextThread->getPriority());
+      return NULL;
+    }
+    */
+    return nextThread;
 }
 
 //----------------------------------------------------------------------
