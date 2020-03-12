@@ -100,13 +100,58 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
-Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
+Lock::Lock(char* debugName) {
+  name = debugName;
+  lockSema = new Semaphore(debugName, 1);
+  owner = NULL;
+}
+Lock::~Lock() { delete lockSema; }
+void Lock::Acquire() {
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  lockSema->P();
+  owner = currentThread;
+  (void)interrupt->SetLevel(oldLevel);
+}
+void Lock::Release() { 
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  ASSERT(isHeldByCurrentThread());
+  lockSema->V();
+  owner = NULL;
+  (void)interrupt->SetLevel(oldLevel);
+}
+bool Lock::isHeldByCurrentThread() { return currentThread == owner; }
 
-Condition::Condition(char* debugName) { }
-Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { ASSERT(FALSE); }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+Condition::Condition(char* debugName) {
+  name = debugName;
+  queue = new List;
+  
+}
+Condition::~Condition() { delete queue; }
+void Condition::Wait(Lock* conditionLock) { 
+    //ASSERT(FALSE);
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    ASSERT(conditionLock->isHeldByCurrentThread());
+    queue->Append((void *)currentThread);
+    conditionLock->Release();
+    currentThread->Sleep();
+    conditionLock->Acquire();
+    (void)interrupt->SetLevel(oldLevel);
+}
+void Condition::Signal(Lock* conditionLock) {
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  ASSERT(conditionLock->isHeldByCurrentThread());
+  Thread *thread =(Thread *) queue->Remove();
+  if(thread != NULL) {
+      
+    scheduler->ReadyToRun(thread);
+  }
+  (void)interrupt->SetLevel(oldLevel);
+}
+void Condition::Broadcast(Lock* conditionLock) {
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  ASSERT(conditionLock->isHeldByCurrentThread());
+  while (!queue->IsEmpty()) {
+    Signal(conditionLock);
+  }
+  (void)interrupt->SetLevel(oldLevel);
+}
