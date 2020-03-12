@@ -88,9 +88,14 @@ class Thread {
     //add by jun
     // Priority
     int priority;
+    //Time Slice
+    int slice;
+    int usedSlice;
+    //priolevel
+    int level;
 
   public:
-    Thread(char* debugName, int p = 0);		// initialize a Thread 
+    Thread(char* debugName, int p = 0, int s = 1);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 
@@ -114,6 +119,41 @@ class Thread {
     int getThreadID() { return tid; }
     int getUserID() { return uid; }
     int getPriority() { return priority;}
+
+    int getSlice() { return slice; }
+    int getUsedSlice() { return usedSlice; }
+    void setSlice(int s) { slice = s; }
+    void initSlice(int s) {
+      slice = s;
+      usedSlice = 0;
+    }
+    void clearSlice();
+
+    void useSlice();
+  
+
+    int getLevel() { return level; }
+    void setLevel(int l){
+      switch (l)
+      {
+      case 0:
+        level = 0;
+        initSlice(2);
+        break;
+      case 1:
+        level = 1;
+        initSlice(4);
+        break;
+      case 2:
+        level = 2;
+        initSlice(8);
+        break;
+      default:
+        level = 0;
+        initSlice(2);
+        break;
+      }
+    };
     const char *getStatus();
 
   private:

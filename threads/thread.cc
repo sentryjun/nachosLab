@@ -33,7 +33,7 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-Thread::Thread(char* threadName, int p = 0)
+Thread::Thread(char* threadName, int p = 0, int s = 1)
 {
     name = threadName;
     stackTop = NULL;
@@ -43,9 +43,13 @@ Thread::Thread(char* threadName, int p = 0)
     //Add by jun
     //USERID IS CURRENT USERID IN LINUX
     uid = getuid();
-    //TEST for user id
-    //printf("Current user id is %d\n", uid);
-    //Allocate tid
+    initSlice(s);
+    if (s <= 1) {
+        setLevel(0);
+    }
+    // TEST for user id
+    // printf("Current user id is %d\n", uid);
+    // Allocate tid
     tid = ThreadIDAllocate();
     priority = p;
     if (tid == -1) {
@@ -104,8 +108,8 @@ Thread::~Thread()
 void 
 Thread::Fork(VoidFunctionPtr func, void *arg)
 {
-    DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
-	  name, (int) func, (int*) arg);
+    DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n, level=%d\n",
+	  name, (int) func, (int*) arg, level);
     
     StackAllocate(func, arg);
 
@@ -201,7 +205,7 @@ Thread::Yield ()
    // scheduler->ReadyToRun(this);
 
     nextThread = scheduler->FindNextToRun();
-    DEBUG('t', "next thread is %d", (int)nextThread);
+    //DEBUG('t', "next thread is %d", (int)nextThread);
     if (nextThread != NULL) {
       scheduler->ReadyToRun(this);
       scheduler->Run(nextThread);
@@ -398,3 +402,9 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 #endif
+void Thread::useSlice() { this->usedSlice = usedSlice + 1;
+  DEBUG('t', "USE SLICE %d\n", usedSlice);
+}
+void Thread::clearSlice() { this->usedSlice = 0;
+  //printf("HHHHHHHHHHHHHHHHHH\n");
+}

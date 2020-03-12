@@ -64,7 +64,7 @@ Timer::TimerExpired()
     // schedule the next timer device interrupt
     interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), 
 		TimerInt);
-
+    //scheduler->MLQSCheck(currentThread);
     // invoke the Nachos interrupt handler for this device
     (*handler)(arg);
 }

@@ -1,0 +1,120 @@
+	interrupts: off -> on
+
+== Tick 10 ==
+	interrupts: on -> off
+Time: 10, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+Entering ThreadTest4Forking thread "fork 1" with func = 0x5657bf26, arg = 1
+	interrupts: on -> off
+Putting thread fork 1 on ready list.
+	interrupts: off -> on
+
+== Tick 20 ==
+	interrupts: on -> off
+Time: 20, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+Forking thread "fork 2" with func = 0x5657bf26, arg = 2
+	interrupts: on -> off
+Putting thread fork 2 on ready list.
+	interrupts: off -> on
+
+== Tick 30 ==
+	interrupts: on -> off
+Time: 30, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+Forking thread "fork 3" with func = 0x5657bf26, arg = 3
+	interrupts: on -> off
+Putting thread fork 3 on ready list.
+	interrupts: off -> on
+
+== Tick 40 ==
+	interrupts: on -> off
+Time: 40, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+thread name=main, id=0, userid=500, priority=0 looped 0 times
+thread name=main, id=0, userid=500, priority=0 looped 1 times
+thread name=main, id=0, userid=500, priority=0 looped 2 times
+thread name=main, id=0, userid=500, priority=0 looped 3 times
+thread name=main, id=0, userid=500, priority=0 looped 4 times
+	interrupts: on -> off
+Finishing thread "main"
+Sleeping thread "main"
+next thread is1450695792
+Switching from thread "main" to thread "fork 1"
+	interrupts: off -> on
+
+== Tick 50 ==
+	interrupts: on -> off
+Time: 50, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+thread name=fork 1, id=1, userid=500, priority=0 looped 0 times
+thread name=fork 1, id=1, userid=500, priority=0 looped 1 times
+thread name=fork 1, id=1, userid=500, priority=0 looped 2 times
+thread name=fork 1, id=1, userid=500, priority=0 looped 3 times
+thread name=fork 1, id=1, userid=500, priority=0 looped 4 times
+	interrupts: on -> off
+Finishing thread "fork 1"
+Sleeping thread "fork 1"
+next thread is1450720512
+Switching from thread "fork 1" to thread "fork 2"
+	interrupts: off -> on
+
+== Tick 60 ==
+	interrupts: on -> off
+Time: 60, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+thread name=fork 2, id=2, userid=500, priority=0 looped 0 times
+thread name=fork 2, id=2, userid=500, priority=0 looped 1 times
+thread name=fork 2, id=2, userid=500, priority=0 looped 2 times
+thread name=fork 2, id=2, userid=500, priority=0 looped 3 times
+thread name=fork 2, id=2, userid=500, priority=0 looped 4 times
+	interrupts: on -> off
+Finishing thread "fork 2"
+Sleeping thread "fork 2"
+next thread is1450745232
+Switching from thread "fork 2" to thread "fork 3"
+	interrupts: off -> on
+
+== Tick 70 ==
+	interrupts: on -> off
+Time: 70, interrupts off
+Pending interrupts:
+End of pending interrupts
+	interrupts: off -> on
+thread name=fork 3, id=3, userid=500, priority=0 looped 0 times
+thread name=fork 3, id=3, userid=500, priority=0 looped 1 times
+thread name=fork 3, id=3, userid=500, priority=0 looped 2 times
+thread name=fork 3, id=3, userid=500, priority=0 looped 3 times
+thread name=fork 3, id=3, userid=500, priority=0 looped 4 times
+	interrupts: on -> off
+Finishing thread "fork 3"
+Sleeping thread "fork 3"
+next thread is0
+Machine idling; checking for interrupts.
+Time: 70, interrupts off
+Pending interrupts:
+End of pending interrupts
+Machine idle.  No interrupts to do.
+No threads ready or runnable, and no pending interrupts.
+Assuming the program completed.
+Machine halting!
+
+Ticks: total 70, idle 0, system 70, user 0
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 0
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

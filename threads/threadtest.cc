@@ -32,9 +32,10 @@ SimpleThread(int which)
     
     for (num = 0; num < 5; num++) {
         //Add by jun test tid uid
-	printf("*** thread %d name %s tid %d uid %d looped %d times\n", 
-            which, currentThread->getName(), currentThread->getThreadID(), 
-            currentThread->getUserID(),num);
+        currentThread->useSlice();
+        printf("*** thread %d name %s tid %d slice %d looped %d times\n", which,
+               currentThread->getName(), currentThread->getThreadID(),
+               currentThread->getUsedSlice(), num);
         currentThread->Yield();
     }
 }
@@ -110,7 +111,47 @@ void PriorityTest() {
     printf("thread name=%s, id=%d, userid=%d, priority=%d looped %d times\n",
            currentThread->getName(), currentThread->getThreadID(),
            currentThread->getUserID(), currentThread->getPriority(), i);
-    currentThread->Yield();
+    //currentThread->Yield();
+  }
+}
+void PriorityTest1() { 
+  for (int i = 0; i < 70; i++) {
+    printf("thread name=%s, id=%d, usedSlice=%d, level=%d looped %d times\n",
+           currentThread->getName(), currentThread->getThreadID(),
+           currentThread->getUsedSlice(), currentThread->getLevel(), i);
+    //currentThread->Yield();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
+  }
+}
+void PriorityTest2() { 
+  for (int i = 0; i < 40; i++) {
+    printf("thread name=%s, id=%d, usedSlice=%d, level=%d looped %d times\n",
+           currentThread->getName(), currentThread->getThreadID(),
+           currentThread->getUsedSlice(), currentThread->getLevel(), i);
+    //currentThread->Yield();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    if (i == 30) {
+      Thread *newT = new Thread("fork N", 4);
+      newT->Fork((VoidFunctionPtr)PriorityTest1, (void*)4);
+    }
+  }
+}
+void PriorityTest3() { 
+  for (int i = 0; i < 50; i++) {
+    printf("thread name=%s, id=%d, usedSlice=%d, level=%d looped %d times\n",
+           currentThread->getName(), currentThread->getThreadID(),
+           currentThread->getUsedSlice(), currentThread->getLevel(), i);
+    //currentThread->Yield();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
+    interrupt->OneTick();
   }
 }
 //------------------------------------------------------------------------
@@ -118,17 +159,48 @@ void PriorityTest() {
 //-----------------------------------------------------------------------
 void ThreadTest4() { 
   DEBUG('t', "Entering ThreadTest4");
-  Thread *t1 = new Thread("fork 1", 1);
+  Thread *t1 = new Thread("fork 1", 3);
   t1->Fork((VoidFunctionPtr)PriorityTest, (void*)1);
-  Thread *t2 = new Thread("fork 2", 2);
+  Thread *t2 = new Thread("fork 2", 1);
   t2->Fork((VoidFunctionPtr)PriorityTest, (void*)2);
-  Thread *t3 = new Thread("fork 3", 3);
+  Thread *t3 = new Thread("fork 3", 2);
   t3->Fork((VoidFunctionPtr)PriorityTest, (void*)3);
 
-  currentThread->Yield();
+  //currentThread->Yield();
   PriorityTest();
 }
 
+void ThreadTest5() { 
+  DEBUG('t', "Entering ThreadTest5\n");
+  
+
+    Thread *t1 = new Thread("Fork1", 3, 4);
+    t1->Fork((VoidFunctionPtr)PriorityTest1, (void*)1);
+    Thread *t2 = new Thread("Fork2", 3, 3);
+    t2->Fork((VoidFunctionPtr)PriorityTest1, (void*)2);
+  //interrupt->OneTick();
+
+  currentThread->Yield();
+  
+}
+void ThreadTest6() { 
+  DEBUG('t', "Entering ThreadTest6\n");
+  
+
+    Thread *t1 = new Thread("Fork1", 3);
+   
+    Thread *t2 = new Thread("Fork2", 3);
+   
+    Thread *t3 = new Thread("Fork3", 3);
+    
+    
+    t1->Fork((VoidFunctionPtr)PriorityTest1, (void*)1);
+    t2->Fork((VoidFunctionPtr)PriorityTest2, (void*)2);
+    t3->Fork((VoidFunctionPtr)PriorityTest3, (void*)3);
+  //interrupt->OneTick();
+    //PriorityTest2();
+    currentThread->Yield();
+}
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -148,7 +220,16 @@ ThreadTest()
       ThreadTest3();
       break;
     case 4:
+      scheduler->setAlgorithm(FPPS);
       ThreadTest4();
+      break;
+    case 5:
+      scheduler->setAlgorithm(RRS);
+      ThreadTest5();
+      break;
+    case 6:
+      scheduler->setAlgorithm(MLQS);
+      ThreadTest6();
       break;
     default:
       printf("No test specified.\n");

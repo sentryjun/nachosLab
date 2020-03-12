@@ -16,25 +16,39 @@
 // The following class defines the scheduler/dispatcher abstraction -- 
 // the data structures and operations needed to keep track of which 
 // thread is running, and which threads are ready but not running.
-
+enum ScheduleAlgorithm {FCFS, FPPS, RRS, MLQS, LINUX, WINDOWS};
 class Scheduler {
-  public:
-    Scheduler();			// Initialize list of ready threads 
-    ~Scheduler();			// De-allocate ready list
+public:
+  Scheduler();  // Initialize list of ready threads
+  ~Scheduler(); // De-allocate ready list
 
-    void ReadyToRun(Thread* thread);	// Thread can be dispatched.
-    Thread* FindNextToRun();		// Dequeue first thread on the ready 
-					// list, if any, and return thread.
-    void Run(Thread* nextThread);	// Cause nextThread to start running
-    void Print();			// Print contents of ready list
-    
-    //add by jun
-    //get ready list
-    List *getReadyList() { return readyList; };
+  void ReadyToRun(Thread *thread); // Thread can be dispatched.
+  Thread *FindNextToRun();         // Dequeue first thread on the ready
+                                   // list, if any, and return thread.
+  void Run(Thread *nextThread);    // Cause nextThread to start running
+  void Print();                    // Print contents of ready list
 
-  private:
-    List *readyList;  		// queue of threads that are ready to run,
-				// but not running
+  // add by jun
+  // get ready list
+  List *getReadyList() { return readyList; };
+
+  void setAlgorithm(ScheduleAlgorithm a) { algorithm = a; }
+  ScheduleAlgorithm getAlgorithm() { return algorithm; }
+  bool FPPSCheck(Thread *t);
+  Thread *FindNextToRunFPPS();
+  bool RRSCheck(Thread *t);
+  Thread *FindNextToRunRRS();
+  void ReadyToRunMLQS(Thread *thread);
+  bool MLQSCheck(Thread *t);
+  Thread *FindNextToRunMLQS();
+  bool MLQSCheck1(Thread *t);
+
+private:
+  List *readyList; // queue of threads that are ready to run,
+                   // but not running
+  List *readyList1;
+  List *readyList2;
+  ScheduleAlgorithm algorithm;
 };
 
 #endif // SCHEDULER_H
