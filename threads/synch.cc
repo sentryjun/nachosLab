@@ -169,7 +169,8 @@ Barrier::~Barrier() {
   delete barrierCondition;
 }
 
-void Barrier::Wait() { 
+void Barrier::Wait() {
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
   barrierLock->Acquire(); 
   if (waiting < number) {
     waiting++;
@@ -177,4 +178,50 @@ void Barrier::Wait() {
   } else {
     barrierCondition->Broadcast(barrierLock);
   }
+  (void)interrupt->SetLevel(oldLevel);
 }
+
+RWLock::RWLock(char *debugName){
+  name = debugName;
+  //rLock = new Lock("reader");
+  wLock = new Lock("writer");
+  rcount = 0;
+  wflag = false;
+  // reader = new List();
+}
+
+RWLock::~RWLock() {
+  //delete rLock;
+  delete wLock;
+}
+
+void RWLock::AquireR() { 
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  //如果没有读者 第一个读者自动获得写锁
+  if (rcount <= 0 || wflag == false) {
+    wflag = true;
+    wLock->Acquire();
+  }
+  rcount++;
+  //rLock->Acquire();
+  (void)interrupt->SetLevel(oldLevel);
+}
+
+void RWLock::ReleaseR() {
+   IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  //如果是最后一个读者
+  if (wLock->isHeldByCurrentThread()) {
+    wflag = false;
+    wLock->Release();
+  }
+  rcount--;
+  (void)interrupt->SetLevel(oldLevel);
+}
+void RWLock::ReleaseW() {
+  IntStatus oldLevel = interrupt->SetLevel(IntOff);
+  wflag = false;
+  wLock->Release();
+  (void)interrupt->SetLevel(oldLevel);
+}
+
+bool RWLock::isWriter() { return wLock->isHeldByCurrentThread(); }

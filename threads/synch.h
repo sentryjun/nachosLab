@@ -156,4 +156,22 @@ class Barrier {
     Condition *barrierCondition;
     Lock *barrierLock;
 };
+
+class RWLock {
+  public:
+    RWLock(char *debugName);
+    ~RWLock();
+    void AquireR();
+    //void AquireW();
+    void ReleaseR();
+    void ReleaseW();
+    bool isWriter();
+
+  private:
+    char *name;
+    Lock *rLock;
+    Lock *wLock;
+    int rcount;
+    bool wflag;
+};
 #endif // SYNCH_H
