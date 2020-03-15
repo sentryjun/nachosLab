@@ -138,4 +138,22 @@ class Condition {
     //add by jun
     List *queue;//Waiting Queue
 };
+
+
+//Add by jun
+//Barrier Class
+class Barrier {
+  public:
+    Barrier(char *debugName, int number);
+    ~Barrier();
+
+    void Wait();
+
+  private:
+    char *name;
+    int number;
+    int waiting;
+    Condition *barrierCondition;
+    Lock *barrierLock;
+};
 #endif // SYNCH_H

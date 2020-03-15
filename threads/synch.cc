@@ -155,3 +155,26 @@ void Condition::Broadcast(Lock* conditionLock) {
   }
   (void)interrupt->SetLevel(oldLevel);
 }
+
+Barrier::Barrier(char *debugName, int number) { 
+  name = debugName;
+  this->number = number;
+  waiting = 0;
+  barrierCondition = new Condition(debugName);
+  barrierLock = new Lock(debugName);
+}
+
+Barrier::~Barrier() {
+  delete barrierLock;
+  delete barrierCondition;
+}
+
+void Barrier::Wait() { 
+  barrierLock->Acquire(); 
+  if (waiting < number) {
+    waiting++;
+    barrierCondition->Wait(barrierLock);
+  } else {
+    barrierCondition->Broadcast(barrierLock);
+  }
+}

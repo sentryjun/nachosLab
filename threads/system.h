@@ -15,6 +15,7 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
+#include "synch.h"
 //Add by Jun
 //Max Threads Numbers
 #define MAXTHREADS 128

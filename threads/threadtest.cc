@@ -201,6 +201,98 @@ void ThreadTest6() {
     //PriorityTest2();
     currentThread->Yield();
 }
+
+#define N 256
+int bufferNumber = 0;
+Semaphore *mutex = new Semaphore("MUTEX", 1);
+Semaphore *empty = new Semaphore("EMPTY", N);
+Semaphore *full = new Semaphore("FULL", 0);
+void SempProducer(int num) {
+  while (1)
+  {
+    empty->P();
+    mutex->P();
+    if (bufferNumber >= N) { 
+      printf("Producer can not produce\n");
+    } else {
+      printf("Producer %d make products %d \n",currentThread->getThreadID(), bufferNumber);
+      bufferNumber++;
+    }
+    mutex->V();
+    full->V();
+  }
+}
+void SempConsumer(int num) {
+  while (1){
+    /* code */
+    full->P();
+    mutex->P();
+    if (bufferNumber <= 0) {
+      printf("customer cannot use\n");
+    } else {
+      printf("Customer %d get products %d \n", currentThread->getThreadID(),
+             bufferNumber);
+      bufferNumber--;
+    }
+    mutex->V();
+    empty->V();
+  }
+}
+void SempTest() { 
+  Lock *lock = new Lock("LockTest"); 
+  
+  }
+
+Condition *conPro = new Condition("Producer");
+Condition *conCon = new Condition("Consumer");
+Lock *bufferLock = new Lock("bufferLock");
+void CondProducer(int num) {
+  while (1)
+  {
+    bufferLock->Acquire();
+    while (bufferNumber >= N) {
+      printf("Producer canot produce\n");
+      conPro->Wait(bufferLock);
+    }
+    printf("Producer %d make products %d \n",currentThread->getThreadID(), bufferNumber);
+    bufferNumber++;
+
+    conCon->Signal(bufferLock);
+    bufferLock->Release();
+  }
+
+  
+}
+
+void CondConsumer(int num) {
+  while (1)
+  {
+    bufferLock->Acquire();
+    while (bufferNumber <= 0)
+    {
+      printf("Consumer canot get\n");
+      conCon->Wait(bufferLock);
+    }
+    printf("Customer %d get products %d \n", currentThread->getThreadID(),
+             bufferNumber);
+    bufferNumber--;
+    conPro->Signal(bufferLock);
+    bufferLock->Release();
+  }
+}
+
+void CondTest() {
+  DEBUG('t', "Entering Condition Test\n");
+  Thread *p1 = new Thread("producer 1");
+  Thread *p2 = new Thread("producer 2");
+
+  Thread *c1 = new Thread("Consumer 1");
+  Thread *c2 = new Thread("Consumer 2");
+  p1->Fork(CondProducer, (void *)1);
+  p2->Fork(CondProducer, (void *)2);
+  c1->Fork(CondConsumer, (void *)3);
+  c2->Fork(CondConsumer, (void *)4);
+}
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -230,6 +322,10 @@ ThreadTest()
     case 6:
       scheduler->setAlgorithm(MLQS);
       ThreadTest6();
+      break;
+    case 7:
+      scheduler->setAlgorithm(RRS);
+      CondTest();
       break;
     default:
       printf("No test specified.\n");
