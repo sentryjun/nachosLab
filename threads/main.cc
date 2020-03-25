@@ -99,7 +99,7 @@ main(int argc, char **argv)
         argCount++;
         break;
       default:
-        testnum = 4;
+        testnum = 0;
         break;
       }
     }

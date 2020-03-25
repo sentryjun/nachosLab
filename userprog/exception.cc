@@ -56,8 +56,19 @@ ExceptionHandler(ExceptionType which)
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
    	interrupt->Halt();
+    } 
+    else if (which == PageFaultException) {
+      int vAddress = machine->ReadRegister(BadVAddrReg);
+      DEBUG('a', "Virtual Address Missed.\n");
+      //add x
+      if (machine->tlb != NULL) {
+        //...
+        DEBUG('a', "TLB MISS HANDLER");
+        machine->replaceTlbLRU(vAddress);
+        //machine->replaceTlbFIFO(vAddress);
+      }
     } else {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
+      printf("Unexpected user mode exception %d %d\n", which, type);
+      ASSERT(FALSE);
     }
 }

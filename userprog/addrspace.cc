@@ -94,8 +94,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
+                                 // a separate page, we could set its
 					// a separate page, we could set its 
-					// pages to be read-only
+                                     // a separate page, we could set its
+                                     // pages to be read-only
     }
     
 // zero out the entire address space, to zero the unitialized data segment 

@@ -40,6 +40,9 @@ class TranslationEntry {
 			// page is referenced or modified.
     bool dirty;         // This bit is set by the hardware every time the
 			// page is modified.
+    //ticks, tick when the page get in
+    int ticks;
+    int ticksLRU;
 };
 
 #endif

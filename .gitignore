@@ -1,2 +1,6 @@
 *.o
 debug.txt
+*.noff
+debug
+debug_timerslice.txt
+make.txt

@@ -181,6 +181,10 @@ class Machine {
 
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
+	//add by jun
+
+    ExceptionType replaceTlbFIFO(int virtAddr);
+    ExceptionType replaceTlbLRU(int virtAddr);
 
   private:
     bool singleStep;		// drop back into the debugger after each

@@ -96,6 +96,11 @@ Machine::ReadMem(int addr, int size, int *value)
     exception = Translate(addr, &physicalAddress, size, FALSE);
     if (exception != NoException) {
 	machine->RaiseException(exception, addr);
+    ExceptionType e = Translate(addr, &physicalAddress, size, TRUE);
+        if (e!=NoException){
+          machine->RaiseException(e, addr);
+          return FALSE;
+        }
 	return FALSE;
     }
     switch (size) {
@@ -145,7 +150,11 @@ Machine::WriteMem(int addr, int size, int value)
     exception = Translate(addr, &physicalAddress, size, TRUE);
     if (exception != NoException) {
 	machine->RaiseException(exception, addr);
-	return FALSE;
+        ExceptionType e = Translate(addr, &physicalAddress, size, TRUE);
+        if (e!=NoException){
+          machine->RaiseException(e, addr);
+          return FALSE;
+        }
     }
     switch (size) {
       case 1:
@@ -198,9 +207,8 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	DEBUG('a', "alignment problem at %d, size %d!\n", virtAddr, size);
 	return AddressErrorException;
     }
-    
     // we must have either a TLB or a page table, but not both!
-    ASSERT(tlb == NULL || pageTable == NULL);	
+    //ASSERT(tlb == NULL || pageTable == NULL);	
     ASSERT(tlb != NULL || pageTable != NULL);	
 
 // calculate the virtual page number, and offset within the page,
@@ -223,14 +231,18 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
 		entry = &tlb[i];			// FOUND!
-		break;
-	    }
+                tlb[i].ticksLRU = stats->totalTicks;
+                stats->numTlbHit++;
+                break;
+            }
 	if (entry == NULL) {				// not found
     	    DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
-    	    return PageFaultException;		// really, this is a TLB fault,
-						// the page may be in memory,
-						// but not in the TLB
-	}
+            stats->numTlbMiss++;
+            stats->numTlbHit--;
+            return PageFaultException; // really, this is a TLB fault,
+                                       // the page may be in memory,
+                                       // but not in the TLB
+        }
     }
 
     if (entry->readOnly && writing) {	// trying to write to a read-only page
@@ -251,5 +263,91 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     *physAddr = pageFrame * PageSize + offset;
     ASSERT((*physAddr >= 0) && ((*physAddr + size) <= MemorySize));
     DEBUG('a', "phys addr = 0x%x\n", *physAddr);
+    return NoException;
+}
+
+ExceptionType
+Machine::replaceTlbFIFO(int virtAddr) {
+    unsigned int vpn, offset;
+    TranslationEntry *entry;
+    unsigned int pageFrame;
+    int t = stats->totalTicks;
+    
+    vpn = (unsigned)virtAddr / PageSize;
+    offset = (unsigned) virtAddr % PageSize;
+	if (vpn >= pageTableSize) {
+	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+			virtAddr, pageTableSize);
+	    return AddressErrorException;
+	} else if (!pageTable[vpn].valid) {
+	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+			virtAddr, pageTableSize);
+		//这里有点问题
+	    return PageFaultException;
+	}
+    entry = &pageTable[vpn];
+    int varIndex = 0;
+    int i;
+    DEBUG('a', "entry is %x\n", vpn);
+    entry->ticks = t;
+    for (i = 0; i < TLBSize; i++) {
+      if (tlb[i].valid == false) {
+        varIndex = i;
+        DEBUG('a', "Empty TLB found\n");
+        break;
+      } else {
+        if (tlb[i].ticks< t) {
+          t = tlb[i].ticks;
+          varIndex = i;
+        }
+        DEBUG('a', "TICKS IN %d with t = %d, j = %d\n", tlb[i].ticksLRU, t, varIndex);
+      }
+    }
+    tlb[varIndex] = *entry;
+    DEBUG('a', "TLB j = %d\n", varIndex);
+    return NoException;
+}
+
+ExceptionType
+Machine::replaceTlbLRU(int virtAddr) {
+    unsigned int vpn, offset;
+    TranslationEntry *entry;
+    unsigned int pageFrame;
+    int t = stats->totalTicks;
+    
+    vpn = (unsigned)virtAddr / PageSize;
+    offset = (unsigned) virtAddr % PageSize;
+	if (vpn >= pageTableSize) {
+	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+			virtAddr, pageTableSize);
+	    return AddressErrorException;
+	} else if (!pageTable[vpn].valid) {
+	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+			virtAddr, pageTableSize);
+	    return PageFaultException;
+	}
+    entry = &pageTable[vpn];
+    int varIndex = 0;
+    int i;
+    DEBUG('a', "entry is %x\n", vpn);
+    entry->ticksLRU = t;
+    for (i = 0; i < TLBSize; i++) {
+      if (tlb[i].valid == false) {
+        varIndex = i;
+        DEBUG('a', "Empty TLB found\n");
+        break;
+      } else {
+        
+        //t = (tlb[i].ticksLRU< t) ? tlb[i].ticksLRU:t;
+        //varIndex = (tlb[i].ticksLRU < t) ? i : varIndex;
+        if (tlb[i].ticksLRU< t) {
+          t = tlb[i].ticksLRU;
+          varIndex = i;
+        }
+        DEBUG('a', "TICKS LRU %d with t = %d, j = %d\n", tlb[i].ticksLRU, t, varIndex);
+      }
+    }
+    tlb[varIndex] = *entry;
+    DEBUG('a', "TLB j = %d\n", varIndex);
     return NoException;
 }
