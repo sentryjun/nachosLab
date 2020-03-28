@@ -215,7 +215,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 // from the virtual address
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
-    
+    DEBUG('a', "VPN is %d virtAddr %d", vpn, virtAddr);
     if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
@@ -249,7 +249,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	DEBUG('a', "%d mapped read-only at %d in TLB!\n", virtAddr, i);
 	return ReadOnlyException;
     }
-    pageFrame = entry->physicalPage;
+    pageFrame = (unsigned int)entry->physicalPage;
 
     // if the pageFrame is too big, there is something really wrong! 
     // An invalid translation was loaded into the page table or TLB. 
@@ -356,6 +356,7 @@ Machine::replaceTlbLRU(int virtAddr) {
 int Machine::writeBackPage(int phyAddr, char*vPages) {
   int vpn = virtPages[phyAddr];
   DEBUG('a', "write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
+  printf("write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
   pageTable[vpn].valid = FALSE;
   pageTable[vpn].physicalPage = -1;
   virtPages[phyAddr] = -1;
@@ -368,6 +369,9 @@ int Machine::physicalPageAllocate() {
   int value = stats->totalTicks;
   if (physicalPage < 0) {
     for (int i = 0; i < NumPhysPages; i++) {
+      if (pageTable[virtPages[i]].isCode) {
+        continue;
+      }
       if (lastUsed[i] < value) {
         physicalPage = i;
         value = lastUsed[i];
@@ -381,9 +385,9 @@ int Machine::physicalPageAllocate() {
 
 void Machine::replacePages(int virtAddr) {
   stats->numPageFaults++;
-  int vpn = (unsigned)virtAddr / PageSize;
-  int offset = (unsigned)virtAddr % PageSize;
-  int physicalPage = physicalPageAllocate();
+  unsigned int vpn = (unsigned)virtAddr / PageSize;
+  unsigned int offset = (unsigned)virtAddr % PageSize;
+  unsigned int physicalPage = physicalPageAllocate();
   pageTable[vpn].valid = TRUE;
   pageTable[vpn].physicalPage = physicalPage;
   lastUsed[physicalPage] = stats->totalTicks;

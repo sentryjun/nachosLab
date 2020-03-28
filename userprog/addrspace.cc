@@ -94,6 +94,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	pageTable[i].valid = FALSE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
+    pageTable[i].isCode = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
                                  // a separate page, we could set its
 					// a separate page, we could set its 
@@ -109,10 +110,16 @@ AddrSpace::AddrSpace(OpenFile *executable)
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
-    //    executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-	//		noffH.code.size, noffH.code.inFileAddr);
+       // executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+		//	noffH.code.size, noffH.code.inFileAddr);
         executable->ReadAt(&(vSpace[noffH.code.virtualAddr]),
 			noffH.code.size, noffH.code.inFileAddr);
+        numCodePage = noffH.code.size / PageSize;
+        for (int i = 0; i < numCodePage; i++){
+          pageTable[i].isCode = TRUE;
+          //int p = machine->phyPageMap->Find();
+          
+        }
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
@@ -124,9 +131,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
     printf("Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
-    //for (int i = 0; i < numPages; i++) {
-    //  printf("0x%x\n", vSpace[i*PageSize]);
-    //}
+    for (int i = 0; i < numPages; i++) {
+        if (pageTable[i].isCode)
+      printf("i = %d, 0x%x\n", i, vSpace[i*PageSize]);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -179,8 +187,16 @@ AddrSpace::InitRegisters()
 //	For now, nothing!
 //----------------------------------------------------------------------
 
-void AddrSpace::SaveState() 
-{}
+void AddrSpace::SaveState() { 
+    for (int i = 0; i < numPages; i++){
+        if (pageTable[i].valid) {
+          machine->phyPageMap->Clear(pageTable[i].physicalPage);
+          pageTable[i].valid = FALSE;
+          pageTable[i].physicalPage = -1;
+        }
+    }
+     
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState

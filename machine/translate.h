@@ -43,6 +43,7 @@ class TranslationEntry {
     //ticks, tick when the page get in
     int ticks;
     int ticksLRU;
+    bool isCode;
 };
 
 #endif
