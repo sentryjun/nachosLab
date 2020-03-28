@@ -321,10 +321,11 @@ Machine::replaceTlbLRU(int virtAddr) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
 			virtAddr, pageTableSize);
 	    return AddressErrorException;
-	} else if (!pageTable[vpn].valid) {
+	} else if ((!pageTable[vpn].valid)&&pageTable[vpn].physicalPage < 0) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
-			virtAddr, pageTableSize);
-	    return PageFaultException;
+			vpn, pageTableSize);
+	    //return PageFaultException;
+      replacePages(virtAddr);
 	}
     entry = &pageTable[vpn];
     int varIndex = 0;
@@ -350,4 +351,45 @@ Machine::replaceTlbLRU(int virtAddr) {
     tlb[varIndex] = *entry;
     DEBUG('a', "TLB j = %d\n", varIndex);
     return NoException;
+}
+
+int Machine::writeBackPage(int phyAddr, char*vPages) {
+  int vpn = virtPages[phyAddr];
+  DEBUG('a', "write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
+  pageTable[vpn].valid = FALSE;
+  pageTable[vpn].physicalPage = -1;
+  virtPages[phyAddr] = -1;
+  memcpy(vPages + PageSize * vpn, mainMemory + PageSize * phyAddr, PageSize);
+  return vpn;
+}
+
+int Machine::physicalPageAllocate() {
+  int physicalPage = phyPageMap->Find();
+  int value = stats->totalTicks;
+  if (physicalPage < 0) {
+    for (int i = 0; i < NumPhysPages; i++) {
+      if (lastUsed[i] < value) {
+        physicalPage = i;
+        value = lastUsed[i];
+      }
+    }
+    char *pages = currentThread->space->vSpace;
+    writeBackPage(physicalPage, pages);
+  }
+  return physicalPage;
+}
+
+void Machine::replacePages(int virtAddr) {
+  stats->numPageFaults++;
+  int vpn = (unsigned)virtAddr / PageSize;
+  int offset = (unsigned)virtAddr % PageSize;
+  int physicalPage = physicalPageAllocate();
+  pageTable[vpn].valid = TRUE;
+  pageTable[vpn].physicalPage = physicalPage;
+  lastUsed[physicalPage] = stats->totalTicks;
+  virtPages[physicalPage] = vpn;
+  char *pages = currentThread->space->vSpace;
+  memcpy(mainMemory + PageSize * physicalPage, pages + PageSize * vpn,
+         PageSize);
+
 }

@@ -25,6 +25,7 @@
 #include "utility.h"
 #include "translate.h"
 #include "disk.h"
+#include "bitmap.h"
 
 // Definitions related to the size, and format of user memory
 
@@ -185,6 +186,13 @@ class Machine {
 
     ExceptionType replaceTlbFIFO(int virtAddr);
     ExceptionType replaceTlbLRU(int virtAddr);
+
+    BitMap *phyPageMap;
+    int lastUsed[NumPhysPages];
+    int virtPages[NumPhysPages];
+    int physicalPageAllocate();
+    int writeBackPage(int phyAddr, char*vPages);
+    void replacePages(int virtAddr);
 
   private:
     bool singleStep;		// drop back into the debugger after each
