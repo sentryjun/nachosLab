@@ -4,3 +4,6 @@ debug.txt
 debug
 debug_timerslice.txt
 make.txt
+GPATH
+GTAGS
+GRTAGS
