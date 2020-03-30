@@ -18,7 +18,7 @@ main()
 
     /* first initialize the array, in reverse sorted order */
     for (i = 0; i < 1024; i++)		
-        A[i] = 512 - i;
+        A[i] = 1024 - i;
 
     /* then sort! */
     for (i = 0; i < 1023; i++)
@@ -28,6 +28,5 @@ main()
 	      A[j] = A[j + 1];
 	      A[j + 1] = tmp;
     	   }
-    Halt();
-    // Exit(A[0]);		/* and then we're done -- should be 0! */
+     Exit(A[0]);		/* and then we're done -- should be 0! */
 }

@@ -104,7 +104,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    //bzero(machine->mainMemory, size);
+    bzero(vSpace, size);
 
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
@@ -115,11 +115,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(vSpace[noffH.code.virtualAddr]),
 			noffH.code.size, noffH.code.inFileAddr);
         numCodePage = noffH.code.size / PageSize;
-        for (int i = 0; i < numCodePage; i++){
-          pageTable[i].isCode = TRUE;
-          //int p = machine->phyPageMap->Find();
-          
-        }
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
@@ -131,10 +126,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
     printf("Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
-    for (int i = 0; i < numPages; i++) {
-        if (pageTable[i].isCode)
-      printf("i = %d, 0x%x\n", i, vSpace[i*PageSize]);
-    }
 }
 
 //----------------------------------------------------------------------
@@ -191,8 +182,7 @@ void AddrSpace::SaveState() {
     for (int i = 0; i < numPages; i++){
         if (pageTable[i].valid) {
           machine->phyPageMap->Clear(pageTable[i].physicalPage);
-          pageTable[i].valid = FALSE;
-          pageTable[i].physicalPage = -1;
+          machine->writeBackPage(pageTable[i].physicalPage, vSpace);
         }
     }
      

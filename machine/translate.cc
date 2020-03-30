@@ -96,7 +96,7 @@ Machine::ReadMem(int addr, int size, int *value)
     exception = Translate(addr, &physicalAddress, size, FALSE);
     if (exception != NoException) {
 	machine->RaiseException(exception, addr);
-    ExceptionType e = Translate(addr, &physicalAddress, size, TRUE);
+    ExceptionType e = Translate(addr, &physicalAddress, size, FALSE);
         if (e!=NoException){
           machine->RaiseException(e, addr);
           return FALSE;
@@ -216,7 +216,8 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
     DEBUG('a', "VPN is %d virtAddr %d", vpn, virtAddr);
-    if (tlb == NULL) {		// => page table => vpn is index into table
+    DEBUG('a', "VALID OR NOT %d\n", (int)pageTable[vpn].valid);
+    //if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
 			virtAddr, pageTableSize);
@@ -227,7 +228,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	    return PageFaultException;
 	}
 	entry = &pageTable[vpn];
-    } else {
+    
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
 		entry = &tlb[i];			// FOUND!
@@ -243,7 +244,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
                                        // the page may be in memory,
                                        // but not in the TLB
         }
-    }
+    
 
     if (entry->readOnly && writing) {	// trying to write to a read-only page
 	DEBUG('a', "%d mapped read-only at %d in TLB!\n", virtAddr, i);
@@ -356,20 +357,23 @@ Machine::replaceTlbLRU(int virtAddr) {
 int Machine::writeBackPage(int phyAddr, char*vPages) {
   int vpn = virtPages[phyAddr];
   DEBUG('a', "write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
-  printf("write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
+  //printf("write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
   pageTable[vpn].valid = FALSE;
   pageTable[vpn].physicalPage = -1;
   virtPages[phyAddr] = -1;
-  memcpy(vPages + PageSize * vpn, mainMemory + PageSize * phyAddr, PageSize);
+  //if (pageTable[vpn].dirty == TRUE )
+    memcpy(vPages + PageSize * vpn, mainMemory + PageSize * phyAddr, PageSize);
+  //pageTable[vpn].dirty = FALSE;
   return vpn;
 }
 
 int Machine::physicalPageAllocate() {
   int physicalPage = phyPageMap->Find();
   int value = stats->totalTicks;
+  unsigned int vpn = (unsigned)ReadRegister(PCReg) / PageSize;
   if (physicalPage < 0) {
     for (int i = 0; i < NumPhysPages; i++) {
-      if (pageTable[virtPages[i]].isCode) {
+      if (virtPages[i] == vpn) {
         continue;
       }
       if (lastUsed[i] < value) {

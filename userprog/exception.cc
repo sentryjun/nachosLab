@@ -67,8 +67,21 @@ ExceptionHandler(ExceptionType which)
         machine->replaceTlbLRU(vAddress);
         //machine->replaceTlbFIFO(vAddress);
       }
+    } else if((which == SyscallException) && (type == SC_Exit)) {
+      int status = machine->ReadRegister(4);
+      printf("Prog Exit with status %d\n", status);
+      interrupt->Halt();
     } else {
       printf("Unexpected user mode exception %d %d\n", which, type);
+      machine->DumpState();
+      printf("Main Memory\n");
+      for (int i = 0; i < machine->pageTableSize; i++) {
+        printf("%d:\t%d", i, machine->pageTable[i].physicalPage);
+        if (i % 4 == 3)
+          printf("\n");
+        else
+          printf("\t");
+      }
       ASSERT(FALSE);
     }
 }
