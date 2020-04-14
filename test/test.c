@@ -1,5 +1,5 @@
 #include "syscall.h"
-#define MAXN 800
+#define MAXN 2048
 
 int A[MAXN];
 #include "syscall.h"
@@ -11,6 +11,6 @@ main()
   for (i = 0; i < MAXN; i++) {
     A[i] = i;
   }
-  Halt();
+  Exit(A[0]);
   /* not reached */
 }

@@ -44,6 +44,7 @@ class TranslationEntry {
     int ticks;
     int ticksLRU;
     bool isCode;
+    int tid;
 };
 
 #endif

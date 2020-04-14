@@ -71,7 +71,19 @@ Machine::Machine(bool debug)
     tlb = NULL;
     pageTable = NULL;
 #endif
-
+#ifdef IPT_USE
+    iPageTable = new TranslationEntry[NumPhysPages];
+    for (i = 0; i < NumPhysPages; i++) {
+    iPageTable[i].virtualPage = -1;
+	iPageTable[i].physicalPage = i;
+	iPageTable[i].valid = FALSE;
+	iPageTable[i].use = FALSE;
+	iPageTable[i].dirty = FALSE;
+    iPageTable[i].isCode = FALSE;
+	iPageTable[i].readOnly = FALSE;
+        iPageTable[i].tid = -1;
+    }
+#endif
     singleStep = debug;
     CheckEndian();
 }

@@ -200,4 +200,7 @@ void AddrSpace::RestoreState()
 {
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
+#ifdef IPT_USE
+    machine->pageTableSize = NumPhysPages;
+#endif
 }

@@ -193,6 +193,8 @@ class Machine {
     int physicalPageAllocate();
     int writeBackPage(int phyAddr, char*vPages);
     void replacePages(int virtAddr);
+    TranslationEntry * iPageTable;
+    void replaceIpt(int virtAddr);
 
   private:
     bool singleStep;		// drop back into the debugger after each

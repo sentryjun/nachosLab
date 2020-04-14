@@ -215,8 +215,20 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 // from the virtual address
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
-    DEBUG('a', "VPN is %d virtAddr %d", vpn, virtAddr);
-    DEBUG('a', "VALID OR NOT %d\n", (int)pageTable[vpn].valid);
+#ifdef IPT_USE
+    if  (vpn >= pageTableSize) {
+      DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+			virtAddr, pageTableSize);
+	    return AddressErrorException;
+    }
+    entry = &iPageTable[vpn % NumPhysPages];
+    if((!entry->valid)||(entry->virtualPage != vpn)||(entry->tid != currentThread->getThreadID())) {
+      return PageFaultException;
+    }
+
+#else
+    //DEBUG('a', "VPN is %d virtAddr %d", (int)vpn, virtAddr);
+    //DEBUG('a', "VALID OR NOT %d\n", (int)pageTable[vpn].valid);
     //if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
@@ -245,15 +257,16 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
                                        // but not in the TLB
         }
     
-
+#endif
     if (entry->readOnly && writing) {	// trying to write to a read-only page
 	DEBUG('a', "%d mapped read-only at %d in TLB!\n", virtAddr, i);
 	return ReadOnlyException;
     }
     pageFrame = (unsigned int)entry->physicalPage;
 
-    // if the pageFrame is too big, there is something really wrong! 
-    // An invalid translation was loaded into the page table or TLB. 
+    lastUsed[pageFrame] = stats->totalTicks;
+    // if the pageFrame is too big, there is something really wrong!
+    // An invalid translation was loaded into the page table or TLB.
     if (pageFrame >= NumPhysPages) { 
 	DEBUG('a', "*** frame %d > %d!\n", pageFrame, NumPhysPages);
 	return BusErrorException;
@@ -265,6 +278,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     ASSERT((*physAddr >= 0) && ((*physAddr + size) <= MemorySize));
     DEBUG('a', "phys addr = 0x%x\n", *physAddr);
     return NoException;
+
 }
 
 ExceptionType
@@ -313,16 +327,10 @@ ExceptionType
 Machine::replaceTlbLRU(int virtAddr) {
     unsigned int vpn, offset;
     TranslationEntry *entry;
-    unsigned int pageFrame;
     int t = stats->totalTicks;
     
     vpn = (unsigned)virtAddr / PageSize;
-    offset = (unsigned) virtAddr % PageSize;
-	if (vpn >= pageTableSize) {
-	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
-			virtAddr, pageTableSize);
-	    return AddressErrorException;
-	} else if ((!pageTable[vpn].valid)&&pageTable[vpn].physicalPage < 0) {
+	if (pageTable[vpn].physicalPage < 0) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
 			vpn, pageTableSize);
 	    //return PageFaultException;
@@ -350,12 +358,13 @@ Machine::replaceTlbLRU(int virtAddr) {
       }
     }
     tlb[varIndex] = *entry;
+    lastUsed[entry->physicalPage] = stats->totalTicks;
     DEBUG('a', "TLB j = %d\n", varIndex);
     return NoException;
 }
 
 int Machine::writeBackPage(int phyAddr, char*vPages) {
-  int vpn = virtPages[phyAddr];
+  unsigned int vpn = virtPages[phyAddr];
   DEBUG('a', "write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
   //printf("write back phy is %d, virtualPage is %d\n", phyAddr, vpn);
   pageTable[vpn].valid = FALSE;
@@ -390,7 +399,6 @@ int Machine::physicalPageAllocate() {
 void Machine::replacePages(int virtAddr) {
   stats->numPageFaults++;
   unsigned int vpn = (unsigned)virtAddr / PageSize;
-  unsigned int offset = (unsigned)virtAddr % PageSize;
   unsigned int physicalPage = physicalPageAllocate();
   pageTable[vpn].valid = TRUE;
   pageTable[vpn].physicalPage = physicalPage;
@@ -400,4 +408,28 @@ void Machine::replacePages(int virtAddr) {
   memcpy(mainMemory + PageSize * physicalPage, pages + PageSize * vpn,
          PageSize);
 
+}
+
+void Machine::replaceIpt(int virtAddr) {
+  unsigned int vpn = (unsigned)virtAddr % PageSize;
+  unsigned int pid = (unsigned)vpn % NumPhysPages;
+  TranslationEntry *entry = &iPageTable[pid];
+  if (!entry->valid) {
+    entry->tid = currentThread->getThreadID();
+    entry->virtualPage = vpn;
+    entry->valid = TRUE;
+    memcpy(mainMemory + PageSize * pid,
+           currentThread->space->vSpace + PageSize * vpn, PageSize);
+    return;
+  } else {
+    int tarTid = entry->tid;
+    Thread *t = threadInstances[tarTid];
+    memcpy(t->space->vSpace + (entry->virtualPage) * PageSize,
+           mainMemory + PageSize * pid, PageSize);
+    entry->tid = currentThread->getThreadID();
+    entry->virtualPage = vpn;
+    entry->valid = TRUE;
+    memcpy(mainMemory + PageSize * pid,
+           currentThread->space->vSpace + PageSize * vpn, PageSize);
+  }
 }

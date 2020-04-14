@@ -24,7 +24,10 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-
+void func() {
+  printf("Thread Switch\n");
+  interrupt->Halt();
+}
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -61,16 +64,25 @@ ExceptionHandler(ExceptionType which)
       int vAddress = machine->ReadRegister(BadVAddrReg);
       DEBUG('a', "Virtual Address Missed.\n");
       //add x
+      #ifdef IPT_USE
+        machine->replaceIpt(vAddress);
+      #else
       if (machine->tlb != NULL) {
         //...
         DEBUG('a', "TLB MISS HANDLER");
         machine->replaceTlbLRU(vAddress);
         //machine->replaceTlbFIFO(vAddress);
       }
+      #endif
     } else if((which == SyscallException) && (type == SC_Exit)) {
       int status = machine->ReadRegister(4);
+      Thread *t = new Thread("test 1");
+      t->Fork((VoidFunctionPtr)(func), (void*)("./test/Halt"));
+      currentThread->Finish();
       printf("Prog Exit with status %d\n", status);
-      interrupt->Halt();
+      
+      
+      //interrupt->Halt();
     } else {
       printf("Unexpected user mode exception %d %d\n", which, type);
       machine->DumpState();
